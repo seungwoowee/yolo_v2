@@ -1,0 +1,124 @@
+#### general settings
+name: YOLOv2_256_batch_10
+use_tb_logger: true
+model: YOLOv2
+gpu_ids: [0]
+
+#### datasets
+datasets:
+  train: # 'train' is used as dataset['phase'] at options.py
+    name: train
+    mode: YOLOv2
+    aug: ~ #noise
+    dataroot_GT: ../data/anno_pickle
+    dataroot_input: ../data/images/train
+    use_shuffle: true
+    n_workers: 1  # per GPU
+    batch_size: 10
+    GT_size: 256
+#    use_flip: true
+#    use_rot: true
+    color: RGB
+    data_type: img
+    position: mid # side_1st // side 2nd // mid
+    ref_frame_num: 5 # 3 / 5 / 7 ...
+    #    scale: ~  # written at options.py
+  val:
+    name: val
+    mode: YOLOv2
+    dataroot_GT: ../data/anno_pickle
+    dataroot_input: ../data/images/val
+    data_type: img
+    position: mid # side_1st // side 2nd // mid
+    ref_frame_num: 5 # 3 / 5 / 7 ...
+    # phase: ~  # written at options.py
+    # scale: ~  # written at options.py
+
+#### network structures
+network:
+  which_model_DRB: YOLOv2
+  rgb_range: 1
+
+
+#### path
+path:
+  pretrain_model: ../trained_models/whole_model_trained_yolo_logo.pth
+  strict_load: true
+  resume_state: ../trained_models/whole_model_trained_yolo_logo.state
+  root: ../experiments              # written at options.py
+  #  experiment_root:  ~  # written at options.py
+  #  test_root:  ~        # written at options.py
+  #  models: ~            # written at options.py
+  #  training_state: ~    # written at options.py
+  #  val_images:  ~       # written at options.py
+
+#### training settings: learning rate scheme, loss
+train:
+  lr_G: !!float 1e-4
+  weight_decay_G: 0
+  beta1_G: 0.9
+  beta2_G: 0.999
+
+  lr_D: !!float 1e-4
+  weight_decay_D: 0
+  beta1_D: 0.9
+  beta2_D: 0.999
+
+  lr_DRB: !!float 1e-4
+  weight_decay_DRB: 0
+  beta1_DRB: 0.9
+  beta2_DRB: 0.999
+
+  niter: 1200001
+  warmup_iter: -1  # no warm up
+
+#  # MultiStepLR
+#  lr_scheme: MultiStepLR
+#  lr_steps: [30000, 60000, 90000, 120000, 150000, 180000, 210000, 240000, 270000, 300000, 330000, 360000]
+
+#  # MultiStepLR_Restart
+#  lr_scheme: MultiStepLR_Restart
+#  lr_steps: [50000, 100000, 200000, 300000]
+#  restarts: [250000, 500000, 750000]
+#  restart_weights: [1, 1, 1]
+
+  #  # CosineAnnealingLR_Restart
+  lr_scheme: CosineAnnealingLR_Restart
+  # four
+#  T_period: [30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000]
+#  restarts: [30000, 60000, 90000, 120000, 150000, 180000, 210000, 240000, 270000, 300000, 330000, 360000, 390000, 420000, 450000]
+#  restart_weights: [ 0.99, 0.891, 0.8019, 0.7217, 0.6495, 0.5846, 0.5261, 0.4735, 0.4262, 0.3835, 0.3452, 0.3107, 0.2796, 0.2516, 0.2265]
+  T_period: [ 300000, 300000, 300000, 300000, 300000 ]
+  restarts: [ 300000, 600000, 900000, 1200000 ]
+  restart_weights: [ 1, 0.75, 0.675, 0.6075 ]
+  eta_min: !!float 1e-7
+
+  lr_gamma: 0.5
+
+  pixel_criterion: cb   # l1 / cb
+  pixel_weight: !!float 1e-3 # !!float 1e-2
+  feature_criterion: l1 # l1 / cb
+  feature_weight: !!float 1e-2
+  # pix fea
+  # l1  l1   1e-1 1e-6
+  # l1  l2   1e-1 1e-6
+  # l1  cb   1e-1 1e-12
+  # l2  l1   1e-1 1e-7
+  # l2  l2   1e-1 1e-7
+  # l2  cb   1e-1 1e-13
+  # cb  l1   1e-3 1e-2
+  # cb  l2   1e-3 1e-2
+  # cb  cb   1e-3 1e-8
+
+  gan_type: ragan  # gan | ragan
+  gan_weight: !!float 5e-3
+  D_update_ratio: 1
+
+  manual_seed: 10
+  val_freq: !!float 6e4
+
+#### logger
+## tensorboard --logdir ./tb_logger --port=6006
+logger:
+  print_freq: 500
+  save_checkpoint_freq: !!float 1e4
